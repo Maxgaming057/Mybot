@@ -1,10 +1,10 @@
 const Utils = require('../modules/utils');
 const { config, lang } = Utils.variables;
 
-module.exports = async (bot, application, executor, reason) => {
+module.exports = async (bot, application, executor) => {
 
     if (!config.Applications.Logs.Enabled) return;
-
+    
     let guild = bot.guilds.cache.get(application.guild);
     let applicant = guild.member(application.creator);
     let logs = Utils.findChannel(config.Applications.Logs.Channel, guild)
@@ -12,20 +12,17 @@ module.exports = async (bot, application, executor, reason) => {
     if (!logs) return
 
     logs.send(Utils.Embed({
-        title: lang.TicketModule.Logs.Applications.Accepted.Title,
+        title: lang.TicketModule.Logs.Applications.Locked.Title,
         fields: [
             {
-                name: lang.TicketModule.Logs.Applications.Accepted.Fields[0],
+                name: lang.TicketModule.Logs.Applications.Locked.Fields[0],
                 value: application.channel_name
             }, {
-                name: lang.TicketModule.Logs.Applications.Accepted.Fields[1],
+                name: lang.TicketModule.Logs.Applications.Locked.Fields[1],
                 value: applicant ? applicant : application.creator
             }, {
-                name: lang.TicketModule.Logs.Applications.Accepted.Fields[2],
+                name: lang.TicketModule.Logs.Applications.Locked.Fields[2],
                 value: executor
-            }, {
-                name: lang.TicketModule.Logs.Applications.Accepted.Fields[3],
-                value: reason ? reason : lang.TicketModule.Logs.Applications.NoReason
             }
         ]
     }))
