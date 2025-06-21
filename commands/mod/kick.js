@@ -4,10 +4,10 @@ const Embed = Utils.Embed;
 const { config, lang, commands } = Utils.variables;
 
 module.exports = {
-  name: 'ban',
+  name: 'kick',
   run: async (bot, message, args) => {
-    const user = Utils.ResolveUser(message);
-    const reason = args.slice(1).join(" ");
+    let user = Utils.ResolveUser(message)
+    let reason = args.slice(1).join(" ");
 
     if (config.Moderation.Logs.Enabled && !Utils.findChannel(config.Moderation.Logs.Channel, message.guild)) return message.channel.send(Embed({ preset: 'console' }));
     if (args.length < 2 || !reason) return message.channel.send(Embed({ preset: 'invalidargs', usage: module.exports.usage }))
@@ -15,12 +15,12 @@ module.exports = {
     if (config.Moderation.AreStaffPunishable) {
       if (user.roles.highest.position >= message.member.roles.highest.position) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishStaffHigher }))
     } else {
-      if (Utils.hasPermission(user, commands.Permissions.ban)) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishStaff }))
+      if (Utils.hasPermission(user, commands.Permissions.kick)) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishStaff }))
     }
     if (user.user.bot == true || user.id == message.author.id) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishUser }));
     if (message.guild.me.roles.highest.position <= user.roles.highest.position) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.BotCantPunishUser }))
 
-    user.ban({ reason: reason });
+    user.kick(reason);
 
     let punishment = {
       type: module.exports.name,
@@ -36,8 +36,8 @@ module.exports = {
 
     message.channel.send(Utils.setupEmbed({
       configPath: {},
-      title: lang.ModerationModule.Commands.Ban.Title,
-      description: lang.ModerationModule.Commands.Ban.Description,
+      title: lang.ModerationModule.Commands.Kick.Title,
+      description: lang.ModerationModule.Commands.Kick.Description,
       color: config.EmbedColors.Success,
       variables: [
         ...Utils.userVariables(user, "user"),
@@ -46,8 +46,9 @@ module.exports = {
       ]
     }))
   },
-  description: "Ban a member of the server.",
-  usage: 'ban <@user> <reason>',
+  description: "Kick a user in the Discord server",
+  usage: 'kick <@user> <reason>',
   aliases: []
 }
+
 // https://directleaks.net

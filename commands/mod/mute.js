@@ -1,26 +1,28 @@
-const Discord = require("discord.js");
-const Utils = require("../../modules/utils.js")
+const Utils = require("../../modules/utils.js");
 const Embed = Utils.Embed;
 const { config, lang, commands } = Utils.variables;
 
 module.exports = {
-  name: 'ban',
+  name: 'mute',
   run: async (bot, message, args) => {
-    const user = Utils.ResolveUser(message);
-    const reason = args.slice(1).join(" ");
+    let user = Utils.ResolveUser(message)
+    let reason = args.slice(1).join(" ")
+    let muteRole = Utils.findRole(config.Moderation.MuteRole, message.guild);
 
     if (config.Moderation.Logs.Enabled && !Utils.findChannel(config.Moderation.Logs.Channel, message.guild)) return message.channel.send(Embed({ preset: 'console' }));
+    if (!muteRole) return message.channel.send(Embed({ preset: 'console' }));
     if (args.length < 2 || !reason) return message.channel.send(Embed({ preset: 'invalidargs', usage: module.exports.usage }))
     if (!user) return message.channel.send(Embed({ preset: 'error', description: lang.GlobalErrors.InvalidUser, usage: module.exports.usage }))
+    if (user.roles.cache.get(muteRole.id)) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.UserAlreadyPunished }));
     if (config.Moderation.AreStaffPunishable) {
       if (user.roles.highest.position >= message.member.roles.highest.position) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishStaffHigher }))
     } else {
-      if (Utils.hasPermission(user, commands.Permissions.ban)) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishStaff }))
+      if (Utils.hasPermission(user, commands.Permissions.mute)) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishStaff }))
     }
     if (user.user.bot == true || user.id == message.author.id) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.CantPunishUser }));
     if (message.guild.me.roles.highest.position <= user.roles.highest.position) return message.channel.send(Embed({ preset: 'error', description: lang.ModerationModule.Errors.BotCantPunishUser }))
 
-    user.ban({ reason: reason });
+    user.roles.add(muteRole.id);
 
     let punishment = {
       type: module.exports.name,
@@ -32,12 +34,12 @@ module.exports = {
     }
 
     await Utils.variables.db.update.punishments.addPunishment(punishment)
-    bot.emit('userPunished', punishment, user, message.member)
+    bot.emit('userPunished', punishment, user, message.member);
 
     message.channel.send(Utils.setupEmbed({
       configPath: {},
-      title: lang.ModerationModule.Commands.Ban.Title,
-      description: lang.ModerationModule.Commands.Ban.Description,
+      title: lang.ModerationModule.Commands.Mute.Title,
+      description: lang.ModerationModule.Commands.Mute.Description,
       color: config.EmbedColors.Success,
       variables: [
         ...Utils.userVariables(user, "user"),
@@ -46,8 +48,8 @@ module.exports = {
       ]
     }))
   },
-  description: "Ban a member of the server.",
-  usage: 'ban <@user> <reason>',
+  description: "Mute a user in the Discord server",
+  usage: 'mute <@user> <reason>',
   aliases: []
 }
 // https://directleaks.net
